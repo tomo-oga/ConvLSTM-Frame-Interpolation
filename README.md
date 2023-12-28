@@ -1,6 +1,13 @@
 # An Implementation of Suzuki _et. al_'s work on Frame Interpolation using ConvLSTM's and Residual Learning
  A practical implementation of _Suzuki et. al._'s work on ["Residual Learning of Video Frame Interpolation Using Convolutional LSTM"](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=9145730)
 
+![Synthesis Network](https://ieeexplore.ieee.org/mediastore_new/IEEE/content/media/6287639/8948470/9145730/suzuk3-3010846-large.gif)
+
+**Figure 1:** Overall Architecture as Described by _Suzuki et. al._
+
+
+
+
  **Note:** This is a closely followed implementation of _Suzuki Et. al_'s work, however may not be exact. Reasons for this are as follows:
  
  **In Terms of the Synthesis Network:**
