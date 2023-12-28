@@ -10,56 +10,65 @@ class EncodingBlock(nn.Module):
     def __init__(self, in_chans, out_chans, kernel_size=3):
         super(EncodingBlock, self).__init__()
         self.conv_lstm = ConvLSTMLayer(in_chans, in_chans, kernel_size)
+        self.batch_norm_1 = nn.BatchNorm2d(in_chans) #could use 3d or batch-wise
         self.conv2d = nn.Conv2d(in_chans, out_chans, kernel_size, padding=kernel_size//2)
+        self.batch_norm_2 = nn.BatchNorm2d(out_chans)
         self.max_pool = nn.MaxPool2d(2)
         
         self.out_chans = out_chans
     
     def forward(self, x):
-        b, seq_len, _, h, w = x.shape
+        b, t, c, h, w = x.shape
         x = self.conv_lstm(x)
-        t_out = torch.zeros(seq_len, b, self.out_chans, h//2, w//2).to(x.device)
-        res_out = torch.zeros(seq_len, b, self.out_chans, h, w).to(x.device)
-        for t in range(seq_len):
-            x_t = self.conv2d(x[:, t, :, :, :])
-            res_out[t] = x_t
-            t_out[t] = self.max_pool(x_t)
-        return t_out.permute(1, 0, 2, 3, 4), res_out.permute(1, 0, 2, 3, 4)
         
+        # batch-wise input of spatial time-series
+        x = x.reshape(b*t, c, h, w)
+        
+        x = F.relu(self.batch_norm_1(x))
+        
+        x = self.conv2d(x)
+        
+        
+        res = x
+        
+        x = self.max_pool(x)
+        
+        # reshaping to preserve time-series data
+        x = x.reshape(b, t, self.out_chans, h//2, w//2)
+        return x, res
+
 
 class DecodingBlock(nn.Module):
     def __init__(self, in_chans, out_chans, kernel_size=3):
         super(DecodingBlock, self).__init__()        
         self.up_sample = nn.Upsample(scale_factor = 2, mode = 'bicubic')
         self.conv2d_1 = nn.Conv2d(in_chans, in_chans, kernel_size, padding=kernel_size//2)
+        self.batch_norm_1 = nn.BatchNorm2d(in_chans)
         self.conv2d_2 = nn.Conv2d(in_chans, out_chans, kernel_size, padding=kernel_size//2)
+        self.batch_norm_2 = nn.BatchNorm2d(out_chans)
         
         self.out_chans = out_chans
     
-    def forward(self, x, res):
-        #ensuring compatible shapes
-        xb, xt, xc, xh, xw = x.shape
-        xh, xw = xh*2, xw*2
-        assert (xb, xt, xc, xh, xw) == res.shape, f"Input and Residual Connection must have same shape, recieved input: {x.shape}, recieved residual: {res.shape}" 
+    def forward(self, x, res): 
+        bt, c, h, w = x.shape
         
-                
-        b, seq_len, _, h, w = x.shape
-        t_out = torch.zeros(seq_len, b, self.out_chans, h*2, w*2).to(x.device)
-        for t in range(seq_len):
-            x_t = self.up_sample(x[:, t, :, :, :])
-            x_t = self.conv2d_1(x_t) + res[:, t, :, :, :]
-            t_out[t] = self.conv2d_2(x_t)
-        return t_out.permute(1, 0, 2, 3, 4)
+        x = self.up_sample(x)
+        x = self.conv2d_1(x) + res
+        x = F.relu(self.batch_norm_1(x))
+        x = self.conv2d_2(x)
+        x = F.relu(self.batch_norm_2(x))
+        
+        return x
 
 # -- For Refinement -- #
 
 class ChannelAttention(nn.Module):
-    def __init__(self, in_chans):
+    def __init__(self, in_chans, r=3):
         super(ChannelAttention, self).__init__()
         self.gap = nn.AdaptiveAvgPool2d(1)
-        self.conv = nn.Sequential(nn.Conv2d(in_chans, in_chans, 1),
+        self.conv = nn.Sequential(nn.Conv2d(in_chans, in_chans//3, 1),
                                   nn.ReLU(),
-                                  nn.Conv2d(in_chans, in_chans, 1),
+                                  nn.Conv2d(in_chans//3, in_chans, 1),
                                   nn.Sigmoid()
                                  )
         
