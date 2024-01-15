@@ -1,7 +1,5 @@
 import torch
-import torch.nn as nn
-from synthesis import SynthesisNet
-from refinement import RefinementNet
+import torch.nn
 
 class Net(nn.Module):
     def __init__(self):
@@ -15,3 +13,9 @@ class Net(nn.Module):
         rough_frame = x
         refined_frame = self.refinement(x, I_2, I_3)
         return rough_frame, refined_frame
+
+def loss_fn(synthesis_frame, refinement_frame, ground_truth):
+    L_1 = l1_loss(synthesis_frame, ground_truth)
+    L_2 = l1_loss(refinement_frame, ground_truth)
+    L = 0.5 * L_1 + L_2
+    return L

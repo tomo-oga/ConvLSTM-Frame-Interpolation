@@ -66,9 +66,9 @@ class ChannelAttention(nn.Module):
     def __init__(self, in_chans, r=3):
         super(ChannelAttention, self).__init__()
         self.gap = nn.AdaptiveAvgPool2d(1)
-        self.conv = nn.Sequential(nn.Conv2d(in_chans, in_chans//r, 1),
+        self.conv = nn.Sequential(nn.Conv2d(in_chans, in_chans//3, 1),
                                   nn.ReLU(),
-                                  nn.Conv2d(in_chans//r, in_chans, 1),
+                                  nn.Conv2d(in_chans//3, in_chans, 1),
                                   nn.Sigmoid()
                                  )
         
