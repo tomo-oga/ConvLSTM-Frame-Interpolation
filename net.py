@@ -1,7 +1,9 @@
-import torch
 import torch.nn as nn
-from synthesis import SynthesisNet
+
+import torch
 from refinement import RefinementNet
+from synthesis import SynthesisNet
+
 
 class Net(nn.Module):
     def __init__(self):
