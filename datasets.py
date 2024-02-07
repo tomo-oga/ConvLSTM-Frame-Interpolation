@@ -34,7 +34,7 @@ class Vimeo90kDatasetTrain(Dataset):
     def __init__(self, transform=None, num_examples=None):
         self.root_dir = 'vimeo_septuplet/sequences'
         self.transform = transform
-        self.sequence_list = self.read_list_file("vimeo_septuplet/sep_trainlist.txt", num_examples)
+        self.sequence_list = self.read_list_file("vimeo_septuplet/trainlist.txt", num_examples)
 
     def read_list_file(self, file_path, num_examples):
         with open(file_path, 'r') as file:

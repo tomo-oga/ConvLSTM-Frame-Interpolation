@@ -18,7 +18,7 @@ def start_timer():
     global start_time
     gc.collect()
     torch.mps.empty_cache()
-    torch.mps.reset_max_memory_allocated()
+    # torch.mps.reset_max_memory_allocated()
     torch.mps.synchronize()
     start_time = time.time()
 
